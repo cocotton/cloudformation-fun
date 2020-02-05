@@ -1,0 +1,10 @@
+[
+  {
+    "ParameterKey": "RepositoryName",
+    "ParameterValue": "cicd-demo"
+  },
+  {
+    "ParameterKey": "RepositoryDescription",
+    "ParameterValue": "CICD demo code"
+  }
+]

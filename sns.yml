@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create a SNS topic used to send alerts by all the AWS Code* tools
+Parameters:
+  TopicName:
+    Description: The SNS Topic's name
+    Type: String
+  TopicDisplayName:
+    Description: The SNS Topic's display name
+    Type: String
+  SubscriptionProtocol:
+    Description: The SNS Subscription's protocol. Limited to "email" or "email-json"
+    Type: String
+    Default: email
+    AllowedValues:
+      - email
+      - email-json
+  SubscriptionEndpoint:
+    Description: The SNS Subscription's endpoint. Must be an email address
+    Type: String
+    AllowedPattern: ^[\w\d\.-]+@[\w\d\.-]+\.[a-z]{2,3}$
+    ConstraintDescription: Invalid email address
+Resources:
+  Topic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: !Ref TopicDisplayName
+      TopicName: !Ref TopicName
+      Tags:
+        - Key: name
+          Value: !Ref TopicName
+        - Key: class
+          Value: DOP-C01
+        - Key: section
+          Value: 4
+  Subscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: !Ref SubscriptionProtocol
+      Endpoint: !Ref SubscriptionEndpoint
+      TopicArn: !Ref Topic
+
+Outputs:
+  Topic:
+    Description: The SNS Topic's ARN created by the template
+    Value: !Ref Topic
+    Export:
+      Name: SNSTopic
