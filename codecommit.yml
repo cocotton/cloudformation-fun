@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploys a CodeCommit repository
+Parameters:
+  RepositoryName:
+    Type: String
+    Description: The name of the CodeCommit repository created by this template
+  RepositoryDescription:
+    Type: String
+    Description: The description of the repository
+    Default: ""
+Resources: 
+  Repository:
+    Type: AWS::CodeCommit::Repository
+    Properties:
+      RepositoryName: !Ref RepositoryName
+      RepositoryDescription: !Ref RepositoryDescription
+      Tags:
+        - Key: name
+          Value: !Ref RepositoryName
+        - Key: class
+          Value: DOP-C01
+        - Key: section
+          Value: 4
+Outputs:
+  Repository:
+    Description: The ID of the CodeCommit repository created by this template
+    Value: !Ref Repository
+    Export:
+      Name: CodeCommitRepository
