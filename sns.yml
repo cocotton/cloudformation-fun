@@ -17,9 +17,9 @@ Parameters:
   SubscriptionEndpoint:
     Description: The SNS Subscription's endpoint. Must be an email address
     Type: String
-    AllowedPattern: ^[\w\d\.-]+@[\w\d\.-]+\.[a-z]{2,3}$
     ConstraintDescription: Invalid email address
-    Default: "nouser@example.com"
+    AllowedPattern: ^[\w\d\.-]+@[\w\d\.-]+\.[a-z]{2,3}$
+    Default: "nomail@example.com"
 Resources:
   Topic:
     Type: AWS::SNS::Topic
@@ -35,12 +35,13 @@ Resources:
           Value: 4
   Subscription:
     Type: AWS::SNS::Subscription
+    Condition: CreateEmailSubscription
     Properties:
       Protocol: !Ref SubscriptionProtocol
-      Endpoint: !If [UseEmailEndpoint, !Ref SubscriptionEndpoint, ""]
+      Endpoint: !Ref SubscriptionEndpoint
       TopicArn: !Ref Topic
 Conditions:
-  UseEmailEndpoint: !Not [!Equals [!Ref SubscriptionEndpoint, nouser@example.com]]
+  CreateEmailSubscription: !Not [!Equals [!Ref SubscriptionEndpoint, nomail@example.com]]
 Outputs:
   Topic:
     Description: The SNS Topic's ARN created by the template
