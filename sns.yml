@@ -19,6 +19,7 @@ Parameters:
     Type: String
     AllowedPattern: ^[\w\d\.-]+@[\w\d\.-]+\.[a-z]{2,3}$
     ConstraintDescription: Invalid email address
+    Default: "nouser@example.com"
 Resources:
   Topic:
     Type: AWS::SNS::Topic
@@ -36,9 +37,10 @@ Resources:
     Type: AWS::SNS::Subscription
     Properties:
       Protocol: !Ref SubscriptionProtocol
-      Endpoint: !Ref SubscriptionEndpoint
+      Endpoint: !If [UseEmailEndpoint, !Ref SubscriptionEndpoint, ""]
       TopicArn: !Ref Topic
-
+Conditions:
+  UseEmailEndpoint: !Not [!Equals [!Ref SubscriptionEndpoint, nouser@example.com]]
 Outputs:
   Topic:
     Description: The SNS Topic's ARN created by the template

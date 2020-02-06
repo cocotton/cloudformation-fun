@@ -13,6 +13,6 @@
   },
   {
     "ParameterKey": "SubscriptionEndpoint",
-    "ParameterValue": "CHANGE_ME"
+    "ParameterValue": "example@example.com"
   }
 ]
