@@ -1,0 +1,10 @@
+[
+  {
+    "ParameterKey": "StacksTemplatesBucket",
+    "ParameterValue": "https://CHANGEME.s3.amazonaws.com"
+  },
+  {
+    "ParameterKey": "SNSTemplate",
+    "ParameterValue": "sns.yml"
+  }
+]
