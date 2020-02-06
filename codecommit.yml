@@ -8,12 +8,27 @@ Parameters:
     Type: String
     Description: The description of the repository
     Default: ""
+  CodeBucket:
+    Type: String
+    Description: The URI of the S3 bucket that contains the demo code that will be uploaded to CodeCommit by this template
+    Default: ""
+  CodeZipFile:
+    Type: String
+    Description: The name of the zip file containing the demo code
+    Default: ""
 Resources: 
   Repository:
     Type: AWS::CodeCommit::Repository
     Properties:
       RepositoryName: !Ref RepositoryName
       RepositoryDescription: !Ref RepositoryDescription
+      Code: 
+        !If
+          - UploadCode
+          - S3:
+              Bucket: !Ref CodeBucket
+              Key: !Ref CodeZipFile
+          - !Ref 'AWS::NoValue'
       Tags:
         - Key: name
           Value: !Ref RepositoryName
@@ -21,6 +36,8 @@ Resources:
           Value: DOP-C01
         - Key: section
           Value: 4
+Conditions:
+  UploadCode: !Not [!Or [!Equals [!Ref CodeBucket, ""], !Equals [!Ref CodeZipFile, ""]]]
 Outputs:
   Repository:
     Description: The ID of the CodeCommit repository created by this template
