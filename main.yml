@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Main template that will setup a pipeline using all the AWS most of the Code* tools
+Parameters:
+  StacksTemplatesBucketURI:
+    Type: String
+    Description: The URI of the S3 bucket that contains all the CloudFormation Stacks templates that will be used as nested stacks in this very template
+  SNSTemplate:
+    Type: String
+    Description: The SNS CloudFormation template file name
+    AllowedPattern: .+\.(yml|yaml|json)$
+    ConstraintDescription: Invalid template file extension, must be one of the following [.yml, .yaml, .json]
+  SNSSubscriptionProtocol:
+    Description: The SNS Subscription's protocol. Limited to "email" or "email-json"
+    Type: String
+    Default: email
+  SNSSubscriptionEndpoint:
+    Description: The SNS Subscription's endpoint. Must be an email address
+    Type: String
+    Default: ""
+  CodeCommitTemplate:
+    Type: String
+    Description: The CodeCommit CloudFormation template file name
+    AllowedPattern: .+\.(yml|yaml|json)$
+    ConstraintDescription: Invalid template file extension, must be one of the following [.yml, .yaml, .json]
+  CodeCommitCodeBucket:
+    Type: String
+    Description: The name of the S3 bucket that contains the demo code that will be uploaded to CodeCommit repository created by the CodeCommit nested stack
+  CodeCommitCodeZipFile:
+    Type: String
+    Description: The name of the zip file, containing the demo code, found inside the CodeCommitCodeBucket
+
+Conditions:
+  UseSNSEmailEndpoint: !Not [!Equals [!Ref SNSSubscriptionEndpoint, ""]]
+Resources:
+  SNS:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Join [/, [!Ref StacksTemplatesBucketURI, !Ref SNSTemplate]]
+      Parameters:
+        TopicName: !Join ['-', [!Ref 'AWS::StackName', topic]]
+        TopicDisplayName: !Join ['-', [!Ref 'AWS::StackName', topic]]
+        SubscriptionProtocol:  !Ref SNSSubscriptionProtocol
+        SubscriptionEndpoint: !If [UseSNSEmailEndpoint, !Ref SNSSubscriptionEndpoint, !Ref 'AWS::NoValue']
+  CodeCommit:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Join [/, [!Ref StacksTemplatesBucketURI, !Ref CodeCommitTemplate]]
+      Parameters:
+        RepositoryName: !Join ['-', [!Ref 'AWS::StackName', repository]]
+        RepositoryDescription: !Sub 'The ${AWS::StackName} stack demo code'
+        CodeBucket: !Ref CodeCommitCodeBucket
+        CodeZipFile: !Ref CodeCommitCodeZipFile
