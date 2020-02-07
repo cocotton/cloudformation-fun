@@ -43,12 +43,8 @@ Resources:
               Key: !Ref CodeZipFile
           - !Ref 'AWS::NoValue'
       Tags:
-        - Key: name
-          Value: !Ref RepositoryName
-        - Key: class
-          Value: DOP-C01
-        - Key: section
-          Value: 4
+        - Key: cf-stack
+          Value: !Ref 'AWS::StackName'
 Conditions:
   UploadCode: !Not [!Or [!Equals [!Ref CodeBucket, ""], !Equals [!Ref CodeZipFile, ""]]]
   UseTrigger: !Not [!Equals [!Ref TriggerTopicARN, ""]]
