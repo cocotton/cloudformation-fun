@@ -27,12 +27,8 @@ Resources:
       DisplayName: !Ref TopicDisplayName
       TopicName: !Ref TopicName
       Tags:
-        - Key: name
-          Value: !Ref TopicName
-        - Key: class
-          Value: DOP-C01
-        - Key: section
-          Value: 4
+        - Key: cf-stack
+          Value: !Ref 'AWS::StackName'
   Subscription:
     Type: AWS::SNS::Subscription
     Condition: CreateEmailSubscription
@@ -43,8 +39,8 @@ Resources:
 Conditions:
   CreateEmailSubscription: !Not [!Equals [!Ref SubscriptionEndpoint, nomail@example.com]]
 Outputs:
-  Topic:
+  TopicARN:
     Description: The SNS Topic's ARN created by the template
     Value: !Ref Topic
     Export:
-      Name: SNSTopic
+      Name: SNSTopicARN

@@ -16,12 +16,25 @@ Parameters:
     Type: String
     Description: The name of the zip file containing the demo code
     Default: ""
+  TriggerTopicARN:
+    Type: String
+    Description: The ARN of the SNS Topic to which the triggers will send messages
+    Default: ""
 Resources: 
   Repository:
     Type: AWS::CodeCommit::Repository
     Properties:
       RepositoryName: !Ref RepositoryName
       RepositoryDescription: !Ref RepositoryDescription
+      Triggers:
+        - !If
+          - UseTrigger
+          - Branches: []
+            DestinationArn: !Ref TriggerTopicARN
+            Events:
+              - all
+            Name: PRTrigger
+          - !Ref 'AWS::NoValue'
       Code: 
         !If
           - UploadCode
@@ -30,14 +43,11 @@ Resources:
               Key: !Ref CodeZipFile
           - !Ref 'AWS::NoValue'
       Tags:
-        - Key: name
-          Value: !Ref RepositoryName
-        - Key: class
-          Value: DOP-C01
-        - Key: section
-          Value: 4
+        - Key: cf-stack
+          Value: !Ref 'AWS::StackName'
 Conditions:
   UploadCode: !Not [!Or [!Equals [!Ref CodeBucket, ""], !Equals [!Ref CodeZipFile, ""]]]
+  UseTrigger: !Not [!Equals [!Ref TriggerTopicARN, ""]]
 Outputs:
   Repository:
     Description: The ID of the CodeCommit repository created by this template

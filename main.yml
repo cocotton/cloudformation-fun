@@ -50,3 +50,4 @@ Resources:
         RepositoryDescription: !Sub 'The ${AWS::StackName} stack demo code'
         CodeBucket: !Ref CodeCommitCodeBucket
         CodeZipFile: !Ref CodeCommitCodeZipFile
+        TriggerTopicARN: !GetAtt SNS.Outputs.TopicARN
