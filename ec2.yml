@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy an EC2 stack that will run our demo code
+Parameters:
+  AMIID:
+    Type: String
+    Description: The AMI ID used by the EC2 instance
+    Default: ami-062f7200baf2fa504
+  InstanceType:
+    Type: String
+    Description: The instance type that will be launched
+    Default: t2.nano
+    AllowedValues: ["t2.nano", "t2.micro"]
+  InstanceKeyPair:
+    Type: String
+    Description: The name of the SSH Key Pair that will be used to access the EC2 instance created in this template
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: cf-stack
+          Value: !Ref 'AWS::StackName'
+  SubnetAZa:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Join ["", [!Ref 'AWS::Region', a]]
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: cf-stack
+          Value: !Ref 'AWS::StackName'
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Only allow access on port 80
+      GroupName: Allow Port 80
+      SecurityGroupIngress:
+        IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      VpcId: !Ref VPC
+      Tags:
+        - Key: cf-stack
+          Value: !Ref 'AWS::StackName'
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AMIID
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref InstanceKeyPair
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: 0
+          GroupSet:
+            - !Ref SecurityGroup
+          SubnetId: !Ref SubnetAZa
+      Tags:
+        - Key: cf-stack
+          Value: !Ref 'AWS::StackName'
+#Outputs:
