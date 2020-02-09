@@ -7,6 +7,7 @@ Parameters:
   SNSTemplate:
     Type: String
     Description: The SNS CloudFormation template file name
+    Default: sns.yml
     AllowedPattern: .+\.(yml|yaml|json)$
     ConstraintDescription: Invalid template file extension, must be one of the following [.yml, .yaml, .json]
   SNSSubscriptionProtocol:
@@ -20,6 +21,7 @@ Parameters:
   CodeCommitTemplate:
     Type: String
     Description: The CodeCommit CloudFormation template file name
+    Default: codecommit.yml
     AllowedPattern: .+\.(yml|yaml|json)$
     ConstraintDescription: Invalid template file extension, must be one of the following [.yml, .yaml, .json]
   CodeCommitCodeBucket:
@@ -28,7 +30,15 @@ Parameters:
   CodeCommitCodeZipFile:
     Type: String
     Description: The name of the zip file, containing the demo code, found inside the CodeCommitCodeBucket
-
+  EC2Template:
+    Type: String
+    Description: The EC2 CloudFormation template file name
+    Default: ec2.yml
+    AllowedPattern: .+\.(yml|yaml|json)$
+    ConstraintDescription: Invalid template file extension, must be one of the following [.yml, .yaml, .json]
+  EC2InstanceKeyPair:
+    Type: String
+    Description: The name of the SSH Key Pair that will be used to access the EC2 instance created by the EC2 nested stack
 Conditions:
   UseSNSEmailEndpoint: !Not [!Equals [!Ref SNSSubscriptionEndpoint, ""]]
 Resources:
@@ -51,3 +61,9 @@ Resources:
         CodeBucket: !Ref CodeCommitCodeBucket
         CodeZipFile: !Ref CodeCommitCodeZipFile
         TriggerTopicARN: !GetAtt SNS.Outputs.TopicARN
+  EC2:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Join [/, [!Ref StacksTemplatesBucketURI, !Ref EC2Template]]
+      Parameters:
+        InstanceKeyPair: !Ref EC2InstanceKeyPair

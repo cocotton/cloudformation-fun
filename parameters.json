@@ -4,19 +4,15 @@
     "ParameterValue": "https://CHANGEME.s3.amazonaws.com"
   },
   {
-    "ParameterKey": "SNSTemplate",
-    "ParameterValue": "sns.yml"
-  },
-  {
-    "ParameterKey": "CodeCommitTemplate",
-    "ParameterValue": "codecommit.yml"
-  },
-  {
     "ParameterKey": "CodeCommitCodeBucket",
     "ParameterValue": ""
   },
   {
     "ParameterKey": "CodeCommitCodeZipFile",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "EC2InstanceKeyPair",
     "ParameterValue": ""
   }
 ]

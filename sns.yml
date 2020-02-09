@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Create a SNS topic used to send alerts by all the AWS Code* tools
+Description: Create an SNS topic receiving the alerts sent by all the AWS Code* tools
 Parameters:
   TopicName:
     Description: The SNS Topic's name
