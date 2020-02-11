@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Deploy an EC2 stack that will run our demo code
 Parameters:
   AMIID:
-    Type: String
+    Type: AWS::EC2::Image::Id
     Description: The AMI ID used by the EC2 instance
     Default: ami-062f7200baf2fa504
   InstanceType:
@@ -23,6 +23,31 @@ Resources:
       Tags:
         - Key: cf-stack
           Value: !Ref 'AWS::StackName'
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: cf-stack
+          Value: !Ref 'AWS::StackName'
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: cf-stack
+          Value: !Ref 'AWS::StackName'
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
   SubnetAZa:
     Type: AWS::EC2::Subnet
     Properties:
@@ -33,33 +58,92 @@ Resources:
       Tags:
         - Key: cf-stack
           Value: !Ref 'AWS::StackName'
+  SubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref SubnetAZa
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Only allow access on port 80
       GroupName: Allow Port 80
       SecurityGroupIngress:
-        IpProtocol: tcp
-        FromPort: 80
-        ToPort: 80
-        CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
       VpcId: !Ref VPC
       Tags:
         - Key: cf-stack
           Value: !Ref 'AWS::StackName'
   Instance:
     Type: AWS::EC2::Instance
+    Metadata:
+      AWS::CloudFormation::Init:
+        configSets:
+          Install:
+            - Install
+            - Test
+          Test:
+            - Test
+        Install:
+          packages:
+            yum:
+              httpd: []
+          services:
+            sysvinit:
+              httpd:
+                ensureRunning: true
+                enabled: true
+              cfn-hup:
+                ensureRunning: true
+                enabled: true
+                files:
+                  - /etc/cfn/cfn-hup.conf
+                  - /etc/cfn/hooks.d/cfn-auto-reloader.conf
+          files:
+            /var/www/html/index.html:
+              content: |
+                <h1>Hello World from EC2 instance!</h1>
+                <p>This was created using cfn-init</p>
+              mode: '000644'
+            /etc/cfn/cfn-hup.conf:
+              content: !Sub |
+                [main]
+                stack=${AWS::StackId}
+                region=${AWS::Region}
+            /etc/cfn/hooks.d/cfn-auto-reloader.conf:
+              content: !Sub |
+                [cfn-auto-reloader-hook]
+                triggers=post.update
+                path=Resources.Instance.Metadata.AWS::CloudFormation::Init
+                action=/opt/aws/bin/cfn-init -v --configsets Test --stack ${AWS::StackId} --resource Instance --region ${AWS::Region}
+                unas=root
+        Test:
+          commands:
+            test: 
+              command: grep -e 'Hello World' -e 'Congratulations' /var/www/html/index.html
     Properties:
       ImageId: !Ref AMIID
       InstanceType: !Ref InstanceType
       KeyName: !Ref InstanceKeyPair
       NetworkInterfaces:
         - AssociatePublicIpAddress: true
-          DeviceIndex: 0
+          DeviceIndex: '0'
           GroupSet:
             - !Ref SecurityGroup
           SubnetId: !Ref SubnetAZa
+      UserData:
+        Fn::Base64: 
+          !Sub |
+            #!/bin/bash -x
+            yum install -y aws-cfn-bootstrap
+            /opt/aws/bin/cfn-init -v --configsets Install --stack ${AWS::StackId} --resource Instance --region ${AWS::Region}
+            /opt/aws/bin/cfn-signal --exit-code $? --stack ${AWS::StackId} --resource Instance --region ${AWS::Region}
       Tags:
         - Key: cf-stack
           Value: !Ref 'AWS::StackName'
-#Outputs:
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT5M
