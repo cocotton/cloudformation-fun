@@ -96,6 +96,12 @@ Resources:
               httpd:
                 ensureRunning: true
                 enabled: true
+              cfn-hup:
+                ensureRunning: true
+                enabled: true
+                files:
+                  - /etc/cfn/cfn-hup.conf
+                  - /etc/cfn/hooks.d/cfn-auto-reloader.conf
           files:
             /var/www/html/index.html:
               content: |
