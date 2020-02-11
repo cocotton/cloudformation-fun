@@ -81,7 +81,13 @@ Resources:
     Type: AWS::EC2::Instance
     Metadata:
       AWS::CloudFormation::Init:
-        config:
+        configSets:
+          Install:
+            - Install
+            - Test
+          Test:
+            - Test
+        Install:
           packages:
             yum:
               httpd: []
@@ -91,11 +97,27 @@ Resources:
                 ensureRunning: true
                 enabled: true
           files:
-            "/var/www/html/index.html":
+            /var/www/html/index.html:
               content: |
                 <h1>Hello World from EC2 instance!</h1>
                 <p>This was created using cfn-init</p>
               mode: '000644'
+            /etc/cfn/cfn-hup.conf:
+              content: !Sub |
+                [main]
+                stack=${AWS::StackId}
+                region=${AWS::Region}
+            /etc/cfn/hooks.d/cfn-auto-reloader.conf:
+              content: !Sub |
+                [cfn-auto-reloader-hook]
+                triggers=post.update
+                path=Resources.Instance.Metadata.AWS::CloudFormation::Init
+                action=/opt/aws/bin/cfn-init -v --configsets Test --stack ${AWS::StackId} --resource Instance --region ${AWS::Region}
+                unas=root
+        Test:
+          commands:
+            test: 
+              command: grep -e 'Hello World' -e 'Congratulations' /var/www/html/index.html
     Properties:
       ImageId: !Ref AMIID
       InstanceType: !Ref InstanceType
@@ -111,7 +133,11 @@ Resources:
           !Sub |
             #!/bin/bash -x
             yum install -y aws-cfn-bootstrap
-            /opt/aws/bin/cfn-init -v --stack ${AWS::StackId} --resource Instance --region ${AWS::Region} 
+            /opt/aws/bin/cfn-init -v --configsets Install --stack ${AWS::StackId} --resource Instance --region ${AWS::Region}
+            /opt/aws/bin/cfn-signal --exit-code $? --stack ${AWS::StackId} --resource Instance --region ${AWS::Region}
       Tags:
         - Key: cf-stack
           Value: !Ref 'AWS::StackName'
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT5M
